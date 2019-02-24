@@ -7,7 +7,6 @@
 static EventGroupHandle_t wifi_event_group;
 
 const int IPV4_GOTIP_BIT = BIT0;
-
 extern QueueHandle_t DCMotorStateQueue;
 extern QueueHandle_t DCMotorStateQueue;
 extern QueueHandle_t AccelStateQueue;
@@ -37,7 +36,6 @@ esp_err_t event_handler(void *ctx, system_event_t *event)
     }
     return ESP_OK;
 }
-
 void initialise_wifi(void)
 {
     tcpip_adapter_init();
@@ -46,28 +44,30 @@ void initialise_wifi(void)
     wifi_init_config_t cfg = WIFI_INIT_CONFIG_DEFAULT();
     ESP_ERROR_CHECK( esp_wifi_init(&cfg) );
     ESP_ERROR_CHECK( esp_wifi_set_storage(WIFI_STORAGE_RAM) );
-    wifi_config_t wifi_config = 
-    {
-        .sta = 
-        {
-            .ssid = "mgts340",
-            //.ssid = "DLINK123",
-            .password = "4997488286",
-        },
-    };
+    wifi_sta_config_t config = {"mgts340","4997488286"};
+    wifi_config_t wifi_config;
+    wifi_config.sta = config;
+    
+    //{
+    //    .sta = 
+    //    {
+    //        .ssid = "mgts340",
+    //        //.ssid = "DLINK123",
+    //        .password = "4997488286",
+    //    },
+    //};
     ESP_LOGI(TAG, "Setting WiFi configuration SSID %s...", wifi_config.sta.ssid);
     ESP_ERROR_CHECK( esp_wifi_set_mode(WIFI_MODE_STA) );
     ESP_ERROR_CHECK( esp_wifi_set_config(ESP_IF_WIFI_STA, &wifi_config) );
     ESP_ERROR_CHECK( esp_wifi_start() );
 }
-
 void wait_for_ip()
 {
     uint32_t bits = IPV4_GOTIP_BIT;
-
     ESP_LOGI(TAG, "Waiting for AP connection...");
     xEventGroupWaitBits(wifi_event_group, bits, false, true, portMAX_DELAY);
     ESP_LOGI(TAG, "Connected to AP");
+    
 }
 
                             //ESP_LOGI(TAG, "DATA REC HEAD1 - %02X HEAD2 - %02X SIZE - %d", DC_MotorControlStructCommand->HEADER1,
@@ -100,7 +100,6 @@ void tcp_server_task(void *pvParameters)
 
     RangeControlStruct* RangeData = (RangeControlStruct*)malloc(sizeof(RangeControlStruct));
     BatterControlStruct* BatterData = (BatterControlStruct*)malloc(sizeof(BatterControlStruct));
-
     while (1) 
     {
 
@@ -129,7 +128,6 @@ void tcp_server_task(void *pvParameters)
                 break;
             }
             ESP_LOGI(TAG, "Socket binded");
-
         err = listen(listen_sock, 1);
         if (err != 0) 
             {

@@ -1,7 +1,8 @@
 #include "wifi_tcp_server.h"
 #include "uart_transfer_task.h"
 
-void app_main()
+
+extern "C" void app_main()
 {
     ESP_ERROR_CHECK( nvs_flash_init() );
     initialise_wifi();

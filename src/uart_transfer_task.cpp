@@ -34,8 +34,6 @@ DC_MotorControlStruct* DC_MotorControlData;
 AccelerometerStruct* AccelData;
 StepMotorControlStruct* StepMotorData;
 RangeControlStruct* RangeData;
-BatterControlStruct* BatteryData;
-
 void uart_event_task(void *pvParameters)
 {
     uart_event_t event;
@@ -63,6 +61,7 @@ void uart_event_task(void *pvParameters)
             switch(event.type) 
             {
                 case UART_DATA:
+                {
                     uart_read_bytes(UART_NUM_0, dtmp, event.size, portMAX_DELAY);
 
                     HEADER = (HEADER_STRUCT*)dtmp;
@@ -90,8 +89,8 @@ void uart_event_task(void *pvParameters)
                         break;
                         case 0xD4:
                             ESP_LOGI(TAG, "BATTERY DATA REC");
-                            BatteryData = (BatterControlStruct*)dtmp;
-                            xQueueSend(BatteryStateQueue,(void*)BatteryData,(TickType_t)0);
+                            //BatteryData = (BatterControlStruct*)dtmp;
+                            //xQueueSend(BatteryStateQueue,(void*)BatteryData,(TickType_t)0);
                         break;
                         case 0xD5:
                             ESP_LOGI(TAG, "RANGE DATA REC");
@@ -105,6 +104,7 @@ void uart_event_task(void *pvParameters)
 
                     //uart_write_bytes(UART_NUM_0, (const char*) dtmp, event.size);
                     break;
+                }
                 case UART_FIFO_OVF://Event of HW FIFO overflow detected
                         ESP_LOGI(TAG, "hw fifo overflow");
                     // If fifo overflow happened, you should consider adding flow control for your application.
@@ -129,6 +129,7 @@ void uart_event_task(void *pvParameters)
                     break;
                 
                 case UART_PATTERN_DET://UART_PATTERN_DET
+                {
                     uart_get_buffered_data_len(UART_NUM_0, &buffered_size);
                     int pos = uart_pattern_pop_pos(UART_NUM_0);
                     ESP_LOGI(TAG, "[UART PATTERN DETECTED] pos: %d, buffered size: %d", pos, buffered_size);
@@ -148,9 +149,12 @@ void uart_event_task(void *pvParameters)
                                 ESP_LOGI(TAG, "read pat : %s", pat);
                             }
                     break;
+                }
                 default:
+                {
                     ESP_LOGI(TAG, "uart event type: %d", event.type);
                     break;
+                }
             }
         }
     }
