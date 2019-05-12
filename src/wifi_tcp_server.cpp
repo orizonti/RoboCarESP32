@@ -72,13 +72,6 @@ void wait_for_ip()
     
 }
 
-//ESP_LOGI(TAG, "DATA REC HEAD1 - %02X HEAD2 - %02X SIZE - %d", DC_MotorControlStructCommand->HEADER1,
-//                                                            DC_MotorControlStructCommand->HEADER2
-//                                                            ,DC_MotorControlStructCommand->SIZE_UNIT);
-//ESP_LOGI(TAG, "SEND DC MOTOR COMMAND: Speed1 - %d Speed2 - %d Speed3 - %d Speed4 - %d", DC_MotorControlStructCommand->Speed1,
-//                                                                                        DC_MotorControlStructCommand->Speed2,
-//                                                                                        DC_MotorControlStructCommand->Speed3,
-//                                                                                        DC_MotorControlStructCommand->Speed4);
 void tcp_server_task(void *pvParameters)
 {
     //char rx_buffer[128];
@@ -102,141 +95,105 @@ void tcp_server_task(void *pvParameters)
 
     RangeControlStruct* RangeData = (RangeControlStruct*)malloc(sizeof(RangeControlStruct));
     BatterControlStruct* BatterData = (BatterControlStruct*)malloc(sizeof(BatterControlStruct));
-    while (1) 
+
+while (1) 
+{
+
+struct sockaddr_in destAddr;
+destAddr.sin_addr.s_addr = htonl(INADDR_ANY);
+destAddr.sin_family = AF_INET;
+destAddr.sin_port = htons(PORT);
+addr_family = AF_INET;
+ip_protocol = IPPROTO_IP;
+
+
+inet_ntoa_r(destAddr.sin_addr, addr_str, sizeof(addr_str) - 1);
+//CREATE SOCKET
+int listen_sock = socket(addr_family, SOCK_STREAM, ip_protocol);
+    if (listen_sock < 0) 
     {
-
-        struct sockaddr_in destAddr;
-        destAddr.sin_addr.s_addr = htonl(INADDR_ANY);
-        destAddr.sin_family = AF_INET;
-        destAddr.sin_port = htons(PORT);
-        addr_family = AF_INET;
-        ip_protocol = IPPROTO_IP;
-
-
-        inet_ntoa_r(destAddr.sin_addr, addr_str, sizeof(addr_str) - 1);
-
-        int listen_sock = socket(addr_family, SOCK_STREAM, ip_protocol);
-            if (listen_sock < 0) 
-            {
-                ESP_LOGE(TAG, "Unable to create socket: errno %d", errno);
-                break;
-            }
-            ESP_LOGI(TAG, "Socket created");
-
-        int err = bind(listen_sock, (struct sockaddr *)&destAddr, sizeof(destAddr));
-            if (err != 0) 
-            {
-                ESP_LOGE(TAG, "Socket unable to bind: errno %d", errno);
-                break;
-            }
-            ESP_LOGI(TAG, "Socket binded");
-        err = listen(listen_sock, 1);
-        if (err != 0) 
-            {
-                ESP_LOGE(TAG, "Error occured during listen: errno %d", errno);
-                break;
-            }
-            ESP_LOGI(TAG, "Socket listening");
-
-        struct sockaddr_in6 sourceAddr; // Large enough for both IPv4 or IPv6
-        uint addrLen = sizeof(sourceAddr);
-        int sock = accept(listen_sock, (struct sockaddr *)&sourceAddr, &addrLen);
-            if (sock < 0) 
-            {
-                ESP_LOGE(TAG, "Unable to accept connection: errno %d", errno);
-                break;
-            }
-            ESP_LOGI(TAG, "Socket accepted");
-
-
-                while(1)
-                {
-
-                    //DC_MOTOR
-                    if(xQueueReceive(DCMotorStateQueue,DC_MotorControlData,(TickType_t)0))
-                    {
-                            err = send(sock, DC_MotorControlData, sizeof(DC_MotorControlStruct), 0);
-                    }
-                    //STEP MOTOR
-                    if(xQueueReceive(StepMotorStateQueue,Step_MotorControlData,(TickType_t)0))
-                    {
-                            err = send(sock, Step_MotorControlData, sizeof(StepMotorControlStruct), 0);
-                    }
-
-                    //ACCELEROMTER
-                    if(xQueueReceive(AccelStateQueue,AccelerometerData,(TickType_t)0))
-                    {
-                            err = send(sock, AccelerometerData, sizeof(AccelerometerStruct), 0);
-                    }
-
-                    //RANGER
-                    if(xQueueReceive(RangeStateQueue,RangeData,(TickType_t)0))
-                    {
-                            err = send(sock, RangeData, sizeof(RangeControlStruct), 0);
-                    }
-
-                    //BATTERY
-                    if(xQueueReceive(BatteryStateQueue,BatterData,(TickType_t)0))
-                    {
-                            err = send(sock, BatterData, sizeof(BatterControlStruct), 0);
-                    }
-
-                    if(DCMotorStateQueue == 0)
-                    {
-                    ESP_LOGE(TAG, "DC QUEUE ERRROR !!!");
-                    vTaskDelay(2000);
-                    }
-                    //int err = 0;
-               //     err = send(sock, STEP_MOTOR_STATE, 17, 0);
-               // vTaskDelay(300);
-               //     err = send(sock, ACCEL_SENSOR_STATE, 23, 0);
-               // vTaskDelay(300);
-                }
-       // while (1)
-       //  {
-       //     int len = recv(sock, rx_buffer, sizeof(rx_buffer) - 1, 0);
-       //         if (len < 0) 
-       //         {
-       //             ESP_LOGE(TAG, "recv failed: errno %d", errno);
-       //             break;
-       //         }
-       //     // Connection closed
-       //         else if (len == 0) 
-       //         {
-       //             ESP_LOGI(TAG, "Connection closed");
-       //             break;
-       //         }
-       //     else 
-       //     {// Data received
-       //         if (sourceAddr.sin6_family == PF_INET) 
-       //         {   // Get the sender's ip address as string
-       //             inet_ntoa_r(((struct sockaddr_in *)&sourceAddr)->sin_addr.s_addr, addr_str, sizeof(addr_str) - 1);
-       //         } 
-       //         else if (sourceAddr.sin6_family == PF_INET6)
-       //         {
-       //             inet6_ntoa_r(sourceAddr.sin6_addr, addr_str, sizeof(addr_str) - 1);
-       //         }
-
-       //         rx_buffer[len] = 0; // Null-terminate whatever we received and treat like a string
-       //         ESP_LOGI(TAG, "Received %d bytes from %s:", len, addr_str);
-       //         ESP_LOGI(TAG, "%s", rx_buffer);
-
-       //         int err = send(sock, rx_buffer, len, 0);
-       //             if (err < 0) 
-       //             {
-       //                 ESP_LOGE(TAG, "Error occured during sending: errno %d", errno);
-       //                 break;
-       //             }
-       //     }
-       // }
-
-            if (sock != -1) 
-            {
-                ESP_LOGE(TAG, "Shutting down socket and restarting...");
-                shutdown(sock, 0);
-                close(sock);
-            }
+	ESP_LOGE(TAG, "Unable to create socket: errno %d", errno);
+	break;
     }
+    ESP_LOGI(TAG, "Socket created");
+
+//BIND SOCKET TO ADDRESS
+int err = bind(listen_sock, (struct sockaddr *)&destAddr, sizeof(destAddr));
+    if (err != 0) 
+    {
+	ESP_LOGE(TAG, "Socket unable to bind: errno %d", errno);
+	break;
+    }
+    ESP_LOGI(TAG, "Socket binded");
+
+//SOCKET LISTEN CONNECTION
+    err = listen(listen_sock, 1);
+    if (err != 0) 
+    {
+	ESP_LOGE(TAG, "Error occured during listen: errno %d", errno);
+	break;
+    }
+    ESP_LOGI(TAG, "Socket listening");
+
+//ACCEPT NEW CONNECTION
+struct sockaddr_in6 sourceAddr; // Large enough for both IPv4 or IPv6
+uint addrLen = sizeof(sourceAddr);
+int sock = accept(listen_sock, (struct sockaddr *)&sourceAddr, &addrLen);
+    if (sock < 0) 
+    {
+	ESP_LOGE(TAG, "Unable to accept connection: errno %d", errno);
+	break;
+    }
+    ESP_LOGI(TAG, "Socket accepted");
+
+
+//COMMUNICATION PROCESS VIA SOCKET
+	while(1)
+	{
+
+	    //DC_MOTOR
+	    if(xQueueReceive(DCMotorStateQueue,DC_MotorControlData,(TickType_t)0))
+	    {
+		    err = send(sock, DC_MotorControlData, sizeof(DC_MotorControlStruct), 0);
+	    }
+	    //STEP MOTOR
+	    if(xQueueReceive(StepMotorStateQueue,Step_MotorControlData,(TickType_t)0))
+	    {
+		    err = send(sock, Step_MotorControlData, sizeof(StepMotorControlStruct), 0);
+	    }
+
+	    //ACCELEROMTER
+	    if(xQueueReceive(AccelStateQueue,AccelerometerData,(TickType_t)0))
+	    {
+		    err = send(sock, AccelerometerData, sizeof(AccelerometerStruct), 0);
+	    }
+
+	    //RANGER
+	    if(xQueueReceive(RangeStateQueue,RangeData,(TickType_t)0))
+	    {
+		    err = send(sock, RangeData, sizeof(RangeControlStruct), 0);
+	    }
+
+	    //BATTERY
+	    if(xQueueReceive(BatteryStateQueue,BatterData,(TickType_t)0))
+	    {
+		    err = send(sock, BatterData, sizeof(BatterControlStruct), 0);
+	    }
+
+	    if(DCMotorStateQueue == 0)
+	    {
+	    ESP_LOGE(TAG, "DC QUEUE ERRROR !!!");
+	    vTaskDelay(2000);
+	    }
+	}
+
+    if (sock != -1) 
+    {
+	ESP_LOGE(TAG, "Shutting down socket and restarting...");
+	shutdown(sock, 0);
+	close(sock);
+    }
+}
     free(DC_MotorControlData);
     vTaskDelete(NULL);
 }
