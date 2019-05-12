@@ -15,6 +15,7 @@ extern QueueHandle_t RangeStateQueue;
 extern QueueHandle_t BatteryStateQueue;
 const char *TAG = "example";
 
+//INITIALIZATOIN WIFI STATE PROCESS
 esp_err_t event_handler(void *ctx, system_event_t *event)
 {
     switch (event->event_id) 
@@ -44,6 +45,7 @@ void initialise_wifi(void)
     wifi_init_config_t cfg = WIFI_INIT_CONFIG_DEFAULT();
     ESP_ERROR_CHECK( esp_wifi_init(&cfg) );
     ESP_ERROR_CHECK( esp_wifi_set_storage(WIFI_STORAGE_RAM) );
+    //wifi_sta_config_t config = {"DLINK123","4997488286"};
     wifi_sta_config_t config = {"mgts340","4997488286"};
     wifi_config_t wifi_config;
     wifi_config.sta = config;
@@ -70,13 +72,13 @@ void wait_for_ip()
     
 }
 
-                            //ESP_LOGI(TAG, "DATA REC HEAD1 - %02X HEAD2 - %02X SIZE - %d", DC_MotorControlStructCommand->HEADER1,
-                            //                                                            DC_MotorControlStructCommand->HEADER2
-                            //                                                            ,DC_MotorControlStructCommand->SIZE_UNIT);
-                            //ESP_LOGI(TAG, "SEND DC MOTOR COMMAND: Speed1 - %d Speed2 - %d Speed3 - %d Speed4 - %d", DC_MotorControlStructCommand->Speed1,
-                            //                                                                                        DC_MotorControlStructCommand->Speed2,
-                            //                                                                                        DC_MotorControlStructCommand->Speed3,
-                            //                                                                                        DC_MotorControlStructCommand->Speed4);
+//ESP_LOGI(TAG, "DATA REC HEAD1 - %02X HEAD2 - %02X SIZE - %d", DC_MotorControlStructCommand->HEADER1,
+//                                                            DC_MotorControlStructCommand->HEADER2
+//                                                            ,DC_MotorControlStructCommand->SIZE_UNIT);
+//ESP_LOGI(TAG, "SEND DC MOTOR COMMAND: Speed1 - %d Speed2 - %d Speed3 - %d Speed4 - %d", DC_MotorControlStructCommand->Speed1,
+//                                                                                        DC_MotorControlStructCommand->Speed2,
+//                                                                                        DC_MotorControlStructCommand->Speed3,
+//                                                                                        DC_MotorControlStructCommand->Speed4);
 void tcp_server_task(void *pvParameters)
 {
     //char rx_buffer[128];

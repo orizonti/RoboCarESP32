@@ -1,7 +1,6 @@
 #include "wifi_tcp_server.h"
 #include "uart_transfer_task.h"
 
-
 extern "C" void app_main()
 {
     ESP_ERROR_CHECK( nvs_flash_init() );
@@ -15,7 +14,6 @@ extern "C" void app_main()
     //xTaskCreate(tx_task, "uart_tx_task", 1024*2, NULL, configMAX_PRIORITIES-1, NULL);
     //xTaskCreate(rx_task, "uart_rx_task", 1024*2, NULL, configMAX_PRIORITIES, NULL);
 }
-
 
  
  

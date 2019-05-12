@@ -38,7 +38,6 @@ typedef struct
    uint16_t AngleMotor1;
    uint16_t AngleMotor2;
    uint16_t AngleMotor3;
-
    uint16_t SpeedMotor1;
    uint16_t SpeedMotor2;
    uint16_t SpeedMotor3;

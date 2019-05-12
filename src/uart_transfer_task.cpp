@@ -1,13 +1,12 @@
 #include "uart_transfer_task.h"
-#include "freertos/FreeRTOS.h"
-#include "freertos/task.h"
+#include "FreeRTOS/FreeRTOS.h"
+#include "FreeRTOS/task.h"
 #include "esp_system.h"
 #include "esp_log.h"
 #include "driver/uart.h"
 #include "soc/uart_struct.h"
 #include "string.h"
 #include "transfer_data_type.h"
-
 
 static const char *TAG = "uart_events";
 
@@ -50,7 +49,6 @@ void uart_event_task(void *pvParameters)
 
 
     vTaskDelay(200);
-
     for(;;) 
     {
         //Waiting for UART event.
