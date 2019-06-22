@@ -6,4 +6,4 @@ void rx_task(void *pvparameters);
 void init_uart();
 void uart_event_task(void *pvParameters);
 
-#endif UART_TRANSFER_TASK
+#endif "UART_TRANSFER_TASK"

@@ -1,5 +1,14 @@
 #include "wifi_tcp_server.h"
-#include "transfer_data_type.h"
+
+
+        uint8_t* WIFI_BUFFER = new uint8_t[WIFI_READ_BUFF_SIZE];
+
+	DC_MotorControlStruct* DC_MotorControlCommand;
+	StepMotorControlStruct* StepMotorCommand;
+	CONNECT_CHECK_REQUEST* MCStateRequest;
+	HEADER_STRUCT* HEADER;
+	uint8_t WIFI_BYTES_AVAILABLE = 0; 
+	uint8_t WIFI_BUFFER_PACK_PTR = 0;
 
 #define PORT 2323
 
@@ -14,7 +23,6 @@ extern QueueHandle_t StepMotorStateQueue;
 extern QueueHandle_t RangeStateQueue;
 extern QueueHandle_t BatteryStateQueue;
 const char *TAG = "example";
-
 //INITIALIZATOIN WIFI STATE PROCESS
 esp_err_t event_handler(void *ctx, system_event_t *event)
 {
@@ -39,6 +47,7 @@ esp_err_t event_handler(void *ctx, system_event_t *event)
 }
 void initialise_wifi(void)
 {
+    bzero(WIFI_BUFFER, WIFI_READ_BUFF_SIZE);
     tcpip_adapter_init();
     wifi_event_group = xEventGroupCreate();
     ESP_ERROR_CHECK( esp_event_loop_init(event_handler, NULL) );
@@ -89,6 +98,9 @@ void tcp_server_task(void *pvParameters)
                     //        DC_MotorControlStructCommand2->Speed3 = 2040;
                     //        DC_MotorControlStructCommand2->Speed4 = 2050;
 
+
+    RangeControlStruct SSt;
+    
     DC_MotorControlStruct* DC_MotorControlData = (DC_MotorControlStruct*)malloc(sizeof(DC_MotorControlStruct));
     StepMotorControlStruct* Step_MotorControlData = (StepMotorControlStruct*)malloc(sizeof(StepMotorControlStruct));
     AccelerometerStruct* AccelerometerData = (AccelerometerStruct*)malloc(sizeof(AccelerometerStruct));
@@ -105,8 +117,6 @@ destAddr.sin_family = AF_INET;
 destAddr.sin_port = htons(PORT);
 addr_family = AF_INET;
 ip_protocol = IPPROTO_IP;
-
-
 inet_ntoa_r(destAddr.sin_addr, addr_str, sizeof(addr_str) - 1);
 //CREATE SOCKET
 int listen_sock = socket(addr_family, SOCK_STREAM, ip_protocol);
@@ -179,6 +189,35 @@ int sock = accept(listen_sock, (struct sockaddr *)&sourceAddr, &addrLen);
 	    {
 		    err = send(sock, BatterData, sizeof(BatterControlStruct), 0);
 	    }
+
+	            //this may by apped bytes count till packet recieved full
+	            int bytes_received = recv(sock,WIFI_BUFFER + WIFI_BYTES_AVAILABLE,WIFI_READ_BUFF_SIZE, 0);
+		    WIFI_BYTES_AVAILABLE += bytes_received;
+		    if(bytes_received >= 6)
+                    HEADER = (HEADER_STRUCT*)WIFI_BUFFER;
+		    {
+			    if(HEADER->HEADER1 == 0xF1)
+			    {
+				switch(HEADER->HEADER2)
+				{
+				case 0xD1:
+				     ESP_LOGI(TAG, "DC MOTOR DATA REC");
+				     DC_MotorControlCommand = (DC_MotorControlStruct*)WIFI_BUFFER;
+				break;
+				case 0xD3:
+				     ESP_LOGI(TAG, "STEP MOTOR DATA REC");
+				    StepMotorCommand = (StepMotorControlStruct*)WIFI_BUFFER;
+				break;
+				case 0xC1:
+				     ESP_LOGI(TAG, "STATE REQUEST");
+				    MCStateRequest = (CONNECT_CHECK_REQUEST*)WIFI_BUFFER;
+				break;
+				//app clear buffer after packet recieved !!!
+				}
+			    }
+		    }
+                    //ESP_LOGI(TAG, "UART REC - %s",dtmp+3);
+                    //ESP_LOGI(TAG, "UART REC HEADER1 - %02X HEADER2 - %02X",*(uint16_t*)dtmp,*(uint16_t*)(dtmp+2));
 
 	    if(DCMotorStateQueue == 0)
 	    {

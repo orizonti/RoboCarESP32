@@ -54,6 +54,7 @@ void uart_event_task(void *pvParameters)
         //Waiting for UART event.
         if(xQueueReceive(uart0_queue, (void * )&event, (portTickType)portMAX_DELAY)) 
         {
+		
             bzero(dtmp, RD_BUF_SIZE);
             //ESP_LOGI(TAG, "uart[%d] event:", UART_NUM_0);
             switch(event.type) 
