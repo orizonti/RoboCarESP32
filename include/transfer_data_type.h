@@ -59,8 +59,3 @@ typedef struct
   uint16_t BatteryVoltage;
 } BatterControlStruct;
 
-typedef struct 
-{
-   HEADER_STRUCT HEADER;
-   uint8_t MCWorkState;
-} CONNECT_CHECK_REQUEST;
