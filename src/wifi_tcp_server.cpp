@@ -3,6 +3,7 @@
 
 #define PORT 2323
 
+HEADER_STRUCT* HEADER;
 /* FreeRTOS event group to signal when we are connected & ready to make a request */
 static EventGroupHandle_t wifi_event_group;
 
@@ -15,6 +16,7 @@ extern QueueHandle_t RangeStateQueue;
 extern QueueHandle_t BatteryStateQueue;
 const char *TAG = "example";
 
+uint8_t WIFI_BUFFER[100];
 //INITIALIZATOIN WIFI STATE PROCESS
 esp_err_t event_handler(void *ctx, system_event_t *event)
 {
@@ -79,15 +81,15 @@ void tcp_server_task(void *pvParameters)
     int addr_family;
     int ip_protocol;
 
-                    //        DC_MotorControlStruct* DC_MotorControlStructCommand2 = (DC_MotorControlStruct*)malloc(sizeof(DC_MotorControlStruct));
-                    //        DC_MotorControlStructCommand2->HEADER.HEADER1 = 0xF1;
-                    //        DC_MotorControlStructCommand2->HEADER.HEADER2 = 0xD1;
-                    //        DC_MotorControlStructCommand2->HEADER.SIZE_UNIT = 14;
-                    //
-                    //        DC_MotorControlStructCommand2->Speed1 = 2020;
-                    //        DC_MotorControlStructCommand2->Speed2 = 2030;
-                    //        DC_MotorControlStructCommand2->Speed3 = 2040;
-                    //        DC_MotorControlStructCommand2->Speed4 = 2050;
+//DC_MotorControlStruct* DC_MotorControlStructCommand2 = (DC_MotorControlStruct*)malloc(sizeof(DC_MotorControlStruct));
+                        //    DC_MotorControlStructCommand2->HEADER.HEADER1 = 0xF1;
+                        //    DC_MotorControlStructCommand2->HEADER.HEADER2 = 0xD1;
+                        //    DC_MotorControlStructCommand2->HEADER.SIZE_UNIT = 14;
+                    
+                        //    DC_MotorControlStructCommand2->Speed1 = 2020;
+                        //    DC_MotorControlStructCommand2->Speed2 = 2030;
+                        //    DC_MotorControlStructCommand2->Speed3 = 2040;
+                        //    DC_MotorControlStructCommand2->Speed4 = 2050;
 
     DC_MotorControlStruct* DC_MotorControlData = (DC_MotorControlStruct*)malloc(sizeof(DC_MotorControlStruct));
     StepMotorControlStruct* Step_MotorControlData = (StepMotorControlStruct*)malloc(sizeof(StepMotorControlStruct));
@@ -185,6 +187,22 @@ int sock = accept(listen_sock, (struct sockaddr *)&sourceAddr, &addrLen);
 	    ESP_LOGE(TAG, "DC QUEUE ERRROR !!!");
 	    vTaskDelay(2000);
 	    }
+
+	    int nbytes = recv(sock, WIFI_BUFFER, 20, MSG_DONTWAIT);
+
+		if(nbytes > 0)
+		{
+		    HEADER = (HEADER_STRUCT*)WIFI_BUFFER;
+
+		    if(HEADER->HEADER1 == 0xF1 && HEADER->HEADER2 == 0xC1)
+		    {
+		        ESP_LOGE(TAG, "REC CONNECT CHECK REQUEST");
+			ConnectCheckRequest* Req = (ConnectCheckRequest*)WIFI_BUFFER;
+					     Req->Connect = 1;
+			err = send(sock, Req, sizeof(ConnectCheckRequest), 0);
+		    }
+
+		}
 	}
 
     if (sock != -1) 
