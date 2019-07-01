@@ -165,8 +165,10 @@ int sock = accept(listen_sock, (struct sockaddr *)&sourceAddr, &addrLen);
 	    }
 
 	    //ACCELEROMTER
-	    if(xQueueReceive(AccelStateQueue,AccelerometerData,(TickType_t)0))
+	    if(xQueueReceive(AccelStateQueue,AccelerometerData,(TickType_t)30))
 	    {
+	        ESP_LOGE(TAG, "HEADER %02X %02X",AccelerometerData->HEADER.HEADER1,AccelerometerData->HEADER.HEADER2);
+	        ESP_LOGE(TAG, "ACCEL %d %d %d",AccelerometerData->AccelX,AccelerometerData->AccelY,AccelerometerData->AccelZ);
 		    err = send(sock, AccelerometerData, sizeof(AccelerometerStruct), 0);
 	    }
 

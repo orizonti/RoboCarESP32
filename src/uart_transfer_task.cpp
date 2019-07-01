@@ -12,10 +12,13 @@ static const char *TAG = "uart_events";
 
 static const int RX_BUF_SIZE = 100;
 
-#define TXD_PIN (GPIO_NUM_1)
-#define RXD_PIN (GPIO_NUM_3)
+//#define TXD_PIN (GPIO_NUM_1)
+//#define RXD_PIN (GPIO_NUM_3)
 
-#define EX_UART_NUM UART_NUM_0
+#define TXD_PIN (GPIO_NUM_16)
+#define RXD_PIN (GPIO_NUM_17)
+
+#define EX_UART_NUM UART_NUM_2
 #define PATTERN_CHR_NUM    (3)         /*!< Set the number of consecutive and identical characters received by receiver which defines a UART pattern*/
 
 #define BUF_SIZE (100)
@@ -39,11 +42,11 @@ void uart_event_task(void *pvParameters)
     size_t buffered_size;
     uint8_t* dtmp = (uint8_t*) malloc(RD_BUF_SIZE);
 
-    DCMotorStateQueue = xQueueCreate(5,sizeof(DCMotorStateQueue));
-    AccelStateQueue = xQueueCreate(5,sizeof(AccelStateQueue));
-    StepMotorStateQueue = xQueueCreate(5,sizeof(StepMotorStateQueue));
-    RangeStateQueue = xQueueCreate(5,sizeof(RangeStateQueue));
-    BatteryStateQueue = xQueueCreate(5,sizeof(BatteryStateQueue));
+    DCMotorStateQueue = xQueueCreate(5,sizeof(DC_MotorControlStruct));
+    AccelStateQueue = xQueueCreate(5,sizeof(AccelerometerStruct));
+    StepMotorStateQueue = xQueueCreate(5,sizeof(StepMotorControlStruct));
+    RangeStateQueue = xQueueCreate(5,sizeof(RangeControlStruct));
+    BatteryStateQueue = xQueueCreate(5,sizeof(BatterControlStruct));
 
     HEADER_STRUCT* HEADER;
 
@@ -61,7 +64,7 @@ void uart_event_task(void *pvParameters)
             {
                 case UART_DATA:
                 {
-                    uart_read_bytes(UART_NUM_0, dtmp, event.size, portMAX_DELAY);
+                    uart_read_bytes(UART_NUM_2, dtmp, event.size, portMAX_DELAY);
 
                     HEADER = (HEADER_STRUCT*)dtmp;
 
@@ -77,8 +80,8 @@ void uart_event_task(void *pvParameters)
                             xQueueSend(DCMotorStateQueue,(void*)DC_MotorControlData,(TickType_t)0);
                         break;
                         case 0xD2:
-                             ESP_LOGI(TAG, "ACCEL DATA REC");
                             AccelData = (AccelerometerStruct*)dtmp;
+	                        ESP_LOGI(TAG, "UART - ACCEL -%d %d %d",AccelData->AccelX,AccelData->AccelY,AccelData->AccelZ);
                             xQueueSend(AccelStateQueue,(void*)AccelData,(TickType_t)0);
                         break;
                         case 0xD3:
@@ -101,19 +104,19 @@ void uart_event_task(void *pvParameters)
 
 
 
-                    //uart_write_bytes(UART_NUM_0, (const char*) dtmp, event.size);
+                    //uart_write_bytes(UART_NUM_2, (const char*) dtmp, event.size);
                     break;
                 }
                 case UART_FIFO_OVF://Event of HW FIFO overflow detected
                         ESP_LOGI(TAG, "hw fifo overflow");
                     // If fifo overflow happened, you should consider adding flow control for your application.
-                    uart_flush_input(UART_NUM_0);
+                    uart_flush_input(UART_NUM_2);
                     xQueueReset(uart0_queue);
                     break;
                 case UART_BUFFER_FULL://Event of UART ring buffer full
                     ESP_LOGI(TAG, "ring buffer full");
                     // If buffer full happened, you should consider encreasing your buffer size
-                    uart_flush_input(UART_NUM_0);
+                    uart_flush_input(UART_NUM_2);
                     xQueueReset(uart0_queue);
                     break;
                 case UART_BREAK://Event of UART RX break detected
@@ -129,21 +132,21 @@ void uart_event_task(void *pvParameters)
                 
                 case UART_PATTERN_DET://UART_PATTERN_DET
                 {
-                    uart_get_buffered_data_len(UART_NUM_0, &buffered_size);
-                    int pos = uart_pattern_pop_pos(UART_NUM_0);
+                    uart_get_buffered_data_len(UART_NUM_2, &buffered_size);
+                    int pos = uart_pattern_pop_pos(UART_NUM_2);
                     ESP_LOGI(TAG, "[UART PATTERN DETECTED] pos: %d, buffered size: %d", pos, buffered_size);
                             if (pos == -1) 
                             {
                                 // There used to be a UART_PATTERN_DET event, but the pattern position queue is full so that it can not
                                 // record the position. We should set a larger queue size.
-                                uart_flush_input(UART_NUM_0);
+                                uart_flush_input(UART_NUM_2);
                             } 
                             else 
                             {
-                                uart_read_bytes(UART_NUM_0, dtmp, pos, 100 / portTICK_PERIOD_MS);
+                                uart_read_bytes(UART_NUM_2, dtmp, pos, 100 / portTICK_PERIOD_MS);
                                 uint8_t pat[PATTERN_CHR_NUM + 1];
                                 memset(pat, 0, sizeof(pat));
-                                uart_read_bytes(UART_NUM_0, pat, PATTERN_CHR_NUM, 100 / portTICK_PERIOD_MS);
+                                uart_read_bytes(UART_NUM_2, pat, PATTERN_CHR_NUM, 100 / portTICK_PERIOD_MS);
                                 ESP_LOGI(TAG, "read data: %s", dtmp);
                                 ESP_LOGI(TAG, "read pat : %s", pat);
                             }
@@ -174,20 +177,20 @@ void init_uart()
         .stop_bits = UART_STOP_BITS_1,
         .flow_ctrl = UART_HW_FLOWCTRL_DISABLE
     };
-    uart_param_config(UART_NUM_0, &uart_config);
+    uart_param_config(UART_NUM_2, &uart_config);
         //Set UART pins (using UART0 default pins ie no changes.)
         //uart_set_pin(EX_UART_NUM, UART_PIN_NO_CHANGE, UART_PIN_NO_CHANGE, UART_PIN_NO_CHANGE, UART_PIN_NO_CHANGE);
-    uart_set_pin(UART_NUM_0, TXD_PIN, RXD_PIN, UART_PIN_NO_CHANGE, UART_PIN_NO_CHANGE);
+    uart_set_pin(UART_NUM_2, TXD_PIN, RXD_PIN, UART_PIN_NO_CHANGE, UART_PIN_NO_CHANGE);
     // We won't use a buffer for sending data.
     //uart_driver_install(EX_UART_NUM, BUF_SIZE * 2, BUF_SIZE * 2, 20, &uart0_queue, 0);
-    //uart_driver_install(UART_NUM_0, RX_BUF_SIZE * 2, 0, 0, NULL, 0);
-    uart_driver_install(UART_NUM_0, RX_BUF_SIZE * 2, BUF_SIZE * 2, 20, &uart0_queue, 0);
+    //uart_driver_install(UART_NUM_2, RX_BUF_SIZE * 2, 0, 0, NULL, 0);
+    uart_driver_install(UART_NUM_2, RX_BUF_SIZE * 2, BUF_SIZE * 2, 20, &uart0_queue, 0);
 
     esp_log_level_set(TAG, ESP_LOG_INFO);
     //Set uart pattern detect function.
-    uart_enable_pattern_det_intr(UART_NUM_0, '+', PATTERN_CHR_NUM, 10000, 10, 10);
+    uart_enable_pattern_det_intr(UART_NUM_2, '+', PATTERN_CHR_NUM, 10000, 10, 10);
     //Reset the pattern queue length to record at most 20 pattern positions.
-    uart_pattern_queue_reset(UART_NUM_0, 20);
+    uart_pattern_queue_reset(UART_NUM_2, 20);
 
     ESP_LOGI(TAG, "END INIT TASK");
 }
@@ -195,7 +198,7 @@ void init_uart()
 int sendData(const char* logName, const char* data)
 {
     const int len = strlen(data);
-    const int txBytes = uart_write_bytes(UART_NUM_0, data, len);
+    const int txBytes = uart_write_bytes(UART_NUM_2, data, len);
     ESP_LOGI(logName, "Wrote %d bytes", txBytes);
     return txBytes;
 }
@@ -218,7 +221,7 @@ void rx_task(void *pvparameters)
     uint8_t* data = (uint8_t*) malloc(RX_BUF_SIZE+1);
     while (1) 
     {
-        const int rxBytes = uart_read_bytes(UART_NUM_0, data, RX_BUF_SIZE, 1000 / portTICK_RATE_MS);
+        const int rxBytes = uart_read_bytes(UART_NUM_2, data, RX_BUF_SIZE, 1000 / portTICK_RATE_MS);
         if (rxBytes > 0) 
         {
             data[rxBytes] = 0;
