@@ -81,7 +81,7 @@ void uart_event_task(void *pvParameters)
                         break;
                         case 0xD2:
                             AccelData = (AccelerometerStruct*)dtmp;
-	                        ESP_LOGI(TAG, "UART - ACCEL -%d %d %d",AccelData->AccelX,AccelData->AccelY,AccelData->AccelZ);
+	                        //ESP_LOGI(TAG, "UART - ACCEL -%d %d %d",AccelData->AccelX,AccelData->AccelY,AccelData->AccelZ);
                             xQueueSend(AccelStateQueue,(void*)AccelData,(TickType_t)0);
                         break;
                         case 0xD3:

@@ -29,6 +29,7 @@ typedef struct
    uint16_t AngularSpeedX;
    uint16_t AngularSpeedY;
    uint16_t AngularSpeedZ;
+   uint16_t MessageCount;
 } AccelerometerStruct;
 
 typedef struct 

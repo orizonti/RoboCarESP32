@@ -14,3 +14,9 @@ include/tags
 src/tags
 
 tags\.temp
+
+\.vscode/
+
+test/
+
+*.bak
