@@ -81,15 +81,6 @@ void tcp_server_task(void *pvParameters)
     int addr_family;
     int ip_protocol;
 
-//DC_MotorControlStruct* DC_MotorControlStructCommand2 = (DC_MotorControlStruct*)malloc(sizeof(DC_MotorControlStruct));
-                        //    DC_MotorControlStructCommand2->HEADER.HEADER1 = 0xF1;
-                        //    DC_MotorControlStructCommand2->HEADER.HEADER2 = 0xD1;
-                        //    DC_MotorControlStructCommand2->HEADER.SIZE_UNIT = 14;
-                    
-                        //    DC_MotorControlStructCommand2->Speed1 = 2020;
-                        //    DC_MotorControlStructCommand2->Speed2 = 2030;
-                        //    DC_MotorControlStructCommand2->Speed3 = 2040;
-                        //    DC_MotorControlStructCommand2->Speed4 = 2050;
 
     DC_MotorControlStruct* DC_MotorControlData = (DC_MotorControlStruct*)malloc(sizeof(DC_MotorControlStruct));
     StepMotorControlStruct* Step_MotorControlData = (StepMotorControlStruct*)malloc(sizeof(StepMotorControlStruct));
@@ -167,7 +158,7 @@ int sock = accept(listen_sock, (struct sockaddr *)&sourceAddr, &addrLen);
 	    //ACCELEROMTER
 	    if(xQueueReceive(AccelStateQueue,AccelerometerData,(TickType_t)30))
 	    {
-	        ESP_LOGE(TAG, "HEADER %02X %02X",AccelerometerData->HEADER.HEADER1,AccelerometerData->HEADER.HEADER2);
+	        //ESP_LOGE(TAG, "HEADER %02X %02X",AccelerometerData->HEADER.HEADER1,AccelerometerData->HEADER.HEADER2);
 	        ESP_LOGE(TAG, "ACCEL %d %d %d",AccelerometerData->AccelX,AccelerometerData->AccelY,AccelerometerData->AccelZ);
 		    err = send(sock, AccelerometerData, sizeof(AccelerometerStruct), 0);
 	    }
@@ -217,3 +208,164 @@ int sock = accept(listen_sock, (struct sockaddr *)&sourceAddr, &addrLen);
     free(DC_MotorControlData);
     vTaskDelete(NULL);
 }
+
+
+//void tcp_server_task(void *pvParameters)
+//{
+//    //char rx_buffer[128];
+//    char addr_str[128];
+//    int addr_family;
+//    int ip_protocol;
+//
+//
+//    DC_MotorControlStruct* DC_MotorControlData = (DC_MotorControlStruct*)malloc(sizeof(DC_MotorControlStruct));
+//    StepMotorControlStruct* Step_MotorControlData = (StepMotorControlStruct*)malloc(sizeof(StepMotorControlStruct));
+//    AccelerometerStruct* AccelerometerData = (AccelerometerStruct*)malloc(sizeof(AccelerometerStruct));
+//
+//    RangeControlStruct* RangeData = (RangeControlStruct*)malloc(sizeof(RangeControlStruct));
+//    BatterControlStruct* BatterData = (BatterControlStruct*)malloc(sizeof(BatterControlStruct));
+//
+//    const char* IP_DEST = "192.168.100.2";
+//
+//while (1) 
+//{
+//// socket to TCP connection
+//        addr_family = AF_INET;
+//        ip_protocol = IPPROTO_IP;
+////DEST ARRD FOR TCP CONNECTION, IP GETTING IN CONNECT FUNCTION
+//struct sockaddr_in destAddr;
+//destAddr.sin_addr.s_addr = htonl(INADDR_ANY);
+//destAddr.sin_family = AF_INET;
+//destAddr.sin_port = htons(PORT);
+//
+//// host addr to UDP connection
+//        struct sockaddr_in host_addrUDP;
+//        host_addrUDP.sin_addr.s_addr = htonl(INADDR_ANY);
+//        host_addrUDP.sin_family = AF_INET;
+//        host_addrUDP.sin_port = htons(PORT);
+//
+//// DEST ADDR FOR UDP CONNECTION, SET IP MANUAL
+//struct sockaddr_in dest_addrUDP;
+//inet_aton(IP_DEST, &dest_addrUDP);
+//host_addrUDP.sin_family = AF_INET;
+//host_addrUDP.sin_port = htons(PORT);
+//
+////inet_ntoa_r(destAddr.sin_addr, addr_str, sizeof(addr_str) - 1);
+//inet_ntoa_r(host_addrUDP.sin_addr, addr_str, sizeof(addr_str) - 1);
+////CREATE SOCKET
+////int listen_sock = socket(addr_family, SOCK_STREAM, ip_protocol);
+//int listen_sock = socket(addr_family, SOCK_DGRAM, ip_protocol);
+//    if (listen_sock < 0) 
+//    {
+//	ESP_LOGE(TAG, "Unable to create socket: errno %d", errno);
+//	break;
+//    }
+//    ESP_LOGI(TAG, "Socket created");
+//
+////BIND SOCKET TO ADDRESS
+////int err = bind(listen_sock, (struct sockaddr *)&destAddr, sizeof(destAddr));
+//int err = bind(listen_sock, (struct sockaddr *)&host_addrUDP, sizeof(host_addrUDP));
+//    if (err != 0) 
+//    {
+//	ESP_LOGE(TAG, "Socket unable to bind: errno %d", errno);
+//	break;
+//    }
+//    ESP_LOGI(TAG, "Socket binded");
+//
+////SOCKET LISTEN CONNECTION
+// //   err = listen(listen_sock, 1);
+// //   if (err != 0) 
+// //   {
+//	//ESP_LOGE(TAG, "Error occured during listen: errno %02X", err);
+//	//break;
+// //   }
+// //   ESP_LOGI(TAG, "Socket listening");
+//
+////ACCEPT NEW CONNECTION
+//struct sockaddr_in6 sourceAddr; // Large enough for both IPv4 or IPv6
+////uint addrLen = sizeof(sourceAddr);
+////int sock = accept(listen_sock, (struct sockaddr *)&sourceAddr, &addrLen);
+////    if (sock < 0) 
+////    {
+////	ESP_LOGE(TAG, "Unable to accept connection: errno %d", errno);
+////	break;
+////    }
+////    ESP_LOGI(TAG, "Socket accepted");
+//
+//
+////COMMUNICATION PROCESS VIA SOCKET
+//	while(1)
+//	{
+//
+//	    //DC_MOTOR
+//	    if(xQueueReceive(DCMotorStateQueue,DC_MotorControlData,(TickType_t)0))
+//	    {
+//		    //err = send(sock, DC_MotorControlData, sizeof(DC_MotorControlStruct), 0);
+//	    }
+//	    //STEP MOTOR
+//	    if(xQueueReceive(StepMotorStateQueue,Step_MotorControlData,(TickType_t)0))
+//	    {
+//		    //err = send(sock, Step_MotorControlData, sizeof(StepMotorControlStruct), 0);
+//	    }
+//
+//	    //ACCELEROMTER
+//	    if(xQueueReceive(AccelStateQueue,AccelerometerData,(TickType_t)30))
+//	    {
+//	        //ESP_LOGE(TAG, "HEADER %02X %02X",AccelerometerData->HEADER.HEADER1,AccelerometerData->HEADER.HEADER2);
+//	        ESP_LOGE(TAG, "ACCEL %d %d %d count %d",AccelerometerData->AccelX,
+//                                              AccelerometerData->AccelY,
+//                                              AccelerometerData->AccelZ,
+//                                              AccelerometerData->MessageCount);
+//		    //err = send(sock, AccelerometerData, sizeof(AccelerometerStruct), 0);
+//		    //err = send(sock, AccelerometerData, sizeof(AccelerometerStruct), 0);
+//            //err = sendto(listen_sock, AccelerometerData, sizeof(AccelerometerData), 0, (struct sockaddr *)&dest_addrUDP, sizeof(dest_addrUDP));
+//	    }
+//
+//	    //RANGER
+//	    if(xQueueReceive(RangeStateQueue,RangeData,(TickType_t)0))
+//	    {
+//		    //err = send(sock, RangeData, sizeof(RangeControlStruct), 0);
+//	    }
+//
+//	    //BATTERY
+//	    if(xQueueReceive(BatteryStateQueue,BatterData,(TickType_t)0))
+//	    {
+//		    //err = send(sock, BatterData, sizeof(BatterControlStruct), 0);
+//	    }
+//
+//	    if(DCMotorStateQueue == 0)
+//	    {
+//	    ESP_LOGE(TAG, "DC QUEUE ERRROR !!!");
+//	    vTaskDelay(2000);
+//	    }
+//
+//	    //int nbytes = recv(sock, WIFI_BUFFER, 20, MSG_DONTWAIT);
+//          socklen_t Len = sizeof(dest_addrUDP);
+//	      int nbytes = recvfrom(listen_sock, WIFI_BUFFER, 20,MSG_DONTWAIT,(sockaddr*)&dest_addrUDP, &Len);
+//
+//		if(nbytes > 0)
+//		{
+//		    HEADER = (HEADER_STRUCT*)WIFI_BUFFER;
+//
+//		    if(HEADER->HEADER1 == 0xF1 && HEADER->HEADER2 == 0xC1)
+//		    {
+//		        ESP_LOGE(TAG, "REC CONNECT CHECK REQUEST");
+//			ConnectCheckRequest* Req = (ConnectCheckRequest*)WIFI_BUFFER;
+//					     Req->Connect = 1;
+//			//err = send(sock, Req, sizeof(ConnectCheckRequest), 0);
+//            err = sendto(listen_sock, Req, sizeof(ConnectCheckRequest), 0, (struct sockaddr *)&dest_addrUDP, sizeof(dest_addrUDP));
+//		    }
+//
+//		}
+//	}
+//
+//    if (listen_sock != -1) 
+//    {
+//	ESP_LOGE(TAG, "Shutting down socket and restarting...");
+//	shutdown(listen_sock, 0);
+//	close(listen_sock);
+//    }
+//}
+//    free(DC_MotorControlData);
+//    vTaskDelete(NULL);
+//}
